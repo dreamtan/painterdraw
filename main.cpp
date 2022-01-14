@@ -8,4 +8,5 @@ int main(int argc, char *argv[])
     painter_draw w;
     w.show();
     return a.exec();
+    ////
 }
