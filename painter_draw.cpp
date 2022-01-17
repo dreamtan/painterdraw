@@ -9,6 +9,9 @@ painter_draw::painter_draw(QWidget *parent)
 
     //初始化
     lpress = false;
+    drawType = 0;//初始绘画类型无
+    drag = 0;//初始非拖拽
+    dragBegin = pos();//拖拽参考坐标，计算位移
     setMouseTracking(true);//开启鼠标实时追踪，监听鼠标移动事件，默认只有按下时才监听
     pix = QPixmap(600,400);
     pix.fill(Qt::white);
@@ -22,6 +25,15 @@ painter_draw::painter_draw(QWidget *parent)
     tbar->setMovable(false);//工具栏不可移动
     tbar->setIconSize(QSize(16, 16));//设置动作图标的尺寸
     tbar->setStyleSheet("background-color:rgb(199,237,204)");//背景色
+    //右键菜单
+    menu = new QMenu(this);
+    menu->addAction("保存 \tCtrl+S",this,SLOT(SavePic()));//添加保存动作
+    menu->addAction("退出 \tALT+F4",this,SLOT(close()));//添加关闭动作
+    menu->setStyleSheet("background-color:rgb(199,237,204)");//设置背景色
+
+    //连接信号与槽函数
+
+
 }
 
 //鼠标事件
@@ -50,6 +62,13 @@ void painter_draw::mouseReleaseEvent(QMouseEvent *event){
         update();
     }
 }
+//右键菜单事件
+
+void painter_draw::contextMenuEvent(QContextMenuEvent *)  //右键菜单事件
+{
+    menu->exec(cursor().pos());//在光标位置弹出菜单
+}
+
 //绘画事件
 void painter_draw::paintEvent(QPaintEvent *event){
 

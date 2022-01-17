@@ -32,15 +32,21 @@ protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
-
+    //右键菜单事件
+    void contextMenuEvent(QContextMenuEvent *);//重写菜单事件
 private:
     Ui::painter_draw *ui;
+
+    QMenu *menu;//右键菜单
 
     QPixmap pix;//缓冲区
     QPixmap tempPix;//临时缓冲区
 
-    QPoint startPoint;
-    QPoint endPoint;
+    QPoint startPoint;//鼠标点击开始绘制坐标
+    QPoint endPoint;//绘制结束坐标
+    QPoint dragBegin;//拖拽开始坐标
+
+
 
     int drawType;//描绘类型
     int lpress = false;//左键按下标志
