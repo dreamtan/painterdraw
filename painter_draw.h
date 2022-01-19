@@ -34,6 +34,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event);
     //右键菜单事件
     void contextMenuEvent(QContextMenuEvent *);//重写菜单事件
+    //按键
+    void keyPressEvent(QKeyEvent *event);
 private:
     Ui::painter_draw *ui;
 
