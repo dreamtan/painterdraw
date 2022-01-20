@@ -16,11 +16,7 @@ painter_draw::painter_draw(QWidget *parent)
 
     openflag = 0;//初始不打开图片
 
-    pix = QPixmap(600,400);
-    pix.fill(Qt::white);
-    tempPix = pix;
-    isDrawing = false;
-    this->setGeometry(350,200,600,400);//设置窗体位置、大小
+    //this->setGeometry(350,200,600,400);//设置窗体位置、大小
     this->setStyleSheet("background_color:white;");//设置背景色
 
     tEdit = new QTextEdit(this);//初始化文本输入框
@@ -84,10 +80,8 @@ painter_draw::painter_draw(QWidget *parent)
 //鼠标事件
 void painter_draw::mousePressEvent(QMouseEvent *event){
     if(event->button() == Qt::LeftButton){
-        //标记正在绘图
-        isDrawing = true;
         switch (drawType) {
-        case 1:{//线条
+        case 1:{//铅笔
             lpress = true;//左键按下
             QVector<QPoint> line;
             lines.append(line);
@@ -102,10 +96,10 @@ void painter_draw::mousePressEvent(QMouseEvent *event){
                 QRect rect;
                 rects.append(rect);
                 QRect &lastRect = rects.last();
-                lastRect.setTopLeft(startPoint);//矩形左上角坐标
+                lastRect.setTopLeft(event->pos());//矩形左上角坐标
                 shape.append(2);
-            }else if (rects.last().contains(startPoint)) {//拖拽模式
-                    dragBegin = startPoint;
+            }else if (rects.last().contains(event->pos())) {//拖拽模式
+                    dragBegin = event->pos();
              }
         break;}
         case 3:{//椭圆
@@ -114,10 +108,10 @@ void painter_draw::mousePressEvent(QMouseEvent *event){
                 QRect rect;
                 ellipse.append(rect);
                 QRect &lastEllipse = ellipse.last();
-                lastEllipse.setTopLeft(startPoint);//椭圆左上角坐标
+                lastEllipse.setTopLeft(event->pos());//椭圆左上角坐标
                 shape.append(3);
-            }else if (rects.last().contains(startPoint)) {//拖拽模式
-                    dragBegin = startPoint;
+            }else if (ellipse.last().contains(event->pos())) {//拖拽模式
+                    dragBegin = event->pos();
              }
         break;
         }
@@ -126,7 +120,7 @@ void painter_draw::mousePressEvent(QMouseEvent *event){
             QRect rect;//鼠标按下，直线一端开始
             line.append(rect);//将新直线添加到直线集合
             QRect& lastLine = line.last();//拿到新直线
-            lastLine.setTopLeft(startPoint);//记录鼠标的坐标(新直线开始一端坐标)
+            lastLine.setTopLeft(event->pos());//记录鼠标的坐标(新直线开始一端坐标)
             shape.append(4);
             break;
         }
@@ -135,11 +129,10 @@ void painter_draw::mousePressEvent(QMouseEvent *event){
             QPoint p;//鼠标按下，文字开始
             tpoint.append(p);//文字坐标
             QPoint &lastp = tpoint.last();
-            lastp = startPoint;
+            lastp = event->pos();
             tEdit->setGeometry(lastp.x()-6,lastp.y()-17,90,90);//文本框位置大小
             tEdit->show();//显示文本输入框
             text.append("");
-            //todo 多个文本框
             tEdit->clear();//全局只有一个，使用前清空
             shape.append(5);
             break;
@@ -148,8 +141,8 @@ void painter_draw::mousePressEvent(QMouseEvent *event){
     }
 }
 void painter_draw::mouseMoveEvent(QMouseEvent *event){
-    if(drag && ((drawType == 2 && rects.last().contains(startPoint))
-                || (drawType == 3 && ellipse.last().contains(startPoint) )))
+    if(drag && ((drawType == 2 && rects.last().contains(event->pos()))
+                || (drawType == 3 && ellipse.last().contains(event->pos()) )))
         {
             setCursor(Qt::SizeAllCursor);//拖拽模式下，并且在拖拽图形中，将光标形状改为十字
         }else
@@ -158,10 +151,10 @@ void painter_draw::mouseMoveEvent(QMouseEvent *event){
             drag = 0;
         }
 
-    if(event->button()&Qt::LeftButton){
+    if(lpress){
         //当按着左键移动时，获取当前位置作为结束点，绘制矩形
         switch (drawType) {
-        case 1:{//线条
+        case 1:{//铅笔
             if(lines.size()<=0)return;//线条集合为空，不画线
             QVector<QPoint> &lastLine = lines.last();
             lastLine.append(event->pos());//记录鼠标坐标（线条轨迹）
@@ -169,58 +162,47 @@ void painter_draw::mouseMoveEvent(QMouseEvent *event){
             break;
         }
         case 2:{//矩形
-            lpress = true;//左键
-            if(!drag){//非拖拽模式
+            //if(drag==0){//非拖拽模式
                 QRect &lastRect = rects.last();//拿到新矩形
                 lastRect.setBottomRight(event->pos());//矩形右下角坐标
-            }else{//拖拽模式
-                QRect &lastRect = rects.last();
-                if(lastRect.contains(event->pos())){//在矩形的内部
-                      int dx = event->pos().x()-dragBegin.x();//横向移动x
-                      int dy = event->pos().y()-dragBegin.y();//纵向移动y
-                      lastRect = lastRect.adjusted(dx,dy,dx,dy);//更新矩形的位置
-                      dragBegin = event->pos();//刷新拖拽点起始坐标
-                  }
-             }
+//            }else{//拖拽模式
+//                QRect &lastRect = rects.last();
+//                if(lastRect.contains(event->pos())){//在矩形的内部
+//                      int dx = event->pos().x()-dragBegin.x();//横向移动x
+//                      int dy = event->pos().y()-dragBegin.y();//纵向移动y
+//                      lastRect = lastRect.adjusted(dx,dy,dx,dy);//更新矩形的位置
+//                      dragBegin = event->pos();//刷新拖拽点起始坐标
+//                  }
+//             }
             update();
         break;}
         case 3:{//椭圆
-            lpress = true;//左键
-            if(!drag){//非拖拽模式
+           // if(drag==0){//非拖拽模式
                 QRect &lastEllipse = ellipse.last();
                 lastEllipse.setBottomRight(event->pos());//椭圆左上角坐标
-            }else{//拖拽模式
-                QRect &lastEllipse = ellipse.last();
-                if(lastEllipse.contains(event->pos())){//椭圆内部
-                    int dx = event->pos().x()-dragBegin.x();//横向移动x
-                    int dy = event->pos().y()-dragBegin.y();//纵向移动y
-                    lastEllipse = lastEllipse.adjusted(dx,dy,dx,dy);
-                    dragBegin = event->pos();
-                }
-             }
+//            }else{//拖拽模式
+//                QRect &lastEllipse = ellipse.last();
+//                if(lastEllipse.contains(event->pos())){//椭圆内部
+//                    int dx = event->pos().x()-dragBegin.x();//横向移动x
+//                    int dy = event->pos().y()-dragBegin.y();//纵向移动y
+//                    lastEllipse = lastEllipse.adjusted(dx,dy,dx,dy);
+//                    dragBegin = event->pos();
+//                }
+//             }
             update();
         break;
         }
         case 4:{//直线
-            QRect& lastLine = line.last();//拿到新直线
+            QRect &lastLine = line.last();//拿到新直线
             lastLine.setBottomRight(event->pos());//更新直线另一端)
             update();//触发窗体重绘
-            break;
-        }
-        case 5:{//文字
             break;
         }
         }
     }
 }
 void painter_draw::mouseReleaseEvent(QMouseEvent *event){
-    if(event->button() == Qt::LeftButton){
-        //左键松开，绘画结束，获取结束点
-        endPoint = event->pos();
-        //标记结束绘画
-        isDrawing = false;
-        update();
-        /***************************/
+    if(lpress){
         switch (drawType) {
         case 1:{//线条
             QVector<QPoint> &lastLine = lines.last();
@@ -230,22 +212,22 @@ void painter_draw::mouseReleaseEvent(QMouseEvent *event){
         }
         case 2:{//矩形
             QRect &lastRect = rects.last();
-            if(!drag){//非拖拽模式
+           // if(!drag){//非拖拽模式
                 lastRect.setBottomRight(event->pos());//
                 //刚画完矩形，讲光标设置到新矩形的中心位置，并进入拖拽模式
-                this->cursor().setPos(this->cursor().pos().x()-lastRect.width()/2,this->cursor().pos().y()-lastRect.height()/2);
-                drag = 1;
-            }
+//                this->cursor().setPos(this->cursor().pos().x()-lastRect.width()/2,this->cursor().pos().y()-lastRect.height()/2);
+//                drag = 1;
+//            }
             lpress = false;
         break;}
         case 3:{//椭圆
             QRect& lastEllipse = ellipse.last();//拿到新椭圆
-            if(!drag){
+ //           if(!drag){
                 lastEllipse.setBottomRight(event->pos());//不是拖拽时，更新椭圆的右下角坐标)
                 //刚画完椭圆，将光标设置到新椭圆的中心位置，并进入拖拽模式
-                this->cursor().setPos(this->cursor().pos().x()-lastEllipse.width()/2,this->cursor().pos().y()-lastEllipse.height()/2);
-                drag = 1;
-            }
+//                this->cursor().setPos(this->cursor().pos().x()-lastEllipse.width()/2,this->cursor().pos().y()-lastEllipse.height()/2);
+//                drag = 1;
+//            }
             lpress = false;
         break;
         }
@@ -269,13 +251,13 @@ void painter_draw::AddTexts(){
     last = tEdit->toPlainText();
 }
 //绘画事件
-void painter_draw::paintEvent(QPaintEvent *event){
+void painter_draw::paintEvent(QPaintEvent *){
     if(openflag == 0){//不是打开图片的情况下新建空白画布
-        pix = QPixmap(size());//新建画布
-        pix.fill(Qt::white);//背景
+        pixmap = QPixmap(size());//新建画布
+        pixmap.fill(Qt::white);//背景
     }
-    QPainter painter;
-    painter.begin(&tempPix);
+    QPixmap pix = pixmap;
+    QPainter painter(&pix);//以pixmap作为画布
     unsigned int i1=0,i2=0,i3=0,i4=0,i5=0;//各种图形的索引
     for (int c = 0;c<shape.size();++c) {
         switch (shape.at(c)) {
@@ -302,12 +284,7 @@ void painter_draw::paintEvent(QPaintEvent *event){
     }
     painter.end();
     painter.begin(this);
-    painter.drawPixmap(0,0,tempPix);//画到窗体
-    //完成绘制，更新缓冲区
-    if(!isDrawing){
-        pix = tempPix;
-    }
-
+    painter.drawPixmap(0,0,pix);//画到窗体
 
 }
 
@@ -364,7 +341,7 @@ void painter_draw::OpenPic()
     {
         QPixmap pix;
         pix.load(picPath);//加载图片
-        QPainter p;
+        QPainter p(&pixmap);
         p.drawPixmap(0,30,pix);//添加工具栏的空间
         openflag = 1;//设置文件打开标志
         update();//触发窗体重绘，将图片画到窗体
@@ -402,4 +379,3 @@ painter_draw::~painter_draw()
 {
     delete ui;
 }
-
